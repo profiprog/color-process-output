@@ -1,0 +1,32 @@
+{
+  "name": "@profiprog/label-process-output",
+  "version": "0.0.0",
+  "description": "Annotate process outputs",
+  "main": "label-process-output.js",
+  "bin": {
+    "label-process-output": "label-process-output.js"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "preversion": "[ -f ~/.npmrc.token.profiprog ] && cat ~/.npmrc.token.profiprog > ~/.npmrc; [ \"$(npm whoami)\" == \"profiprog\" ]",
+    "version": "npm publish",
+    "postversion": "git push --follow-tags"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/profiprog/label-process-output.git"
+  },
+  "keywords": [
+    "cli",
+    "label"
+  ],
+  "author": "https://github.com/profiprog",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/profiprog/label-process-output/issues"
+  },
+  "homepage": "https://github.com/profiprog/label-process-output#readme",
+  "publishConfig": {
+    "access": "public"
+  }
+}
