@@ -1,6 +1,14 @@
 # label-process-output
 Annotate process outputs
 
+
+## Install
+```
+npm i -g @profiprog/label-process-output@latest
+```
+
+## Usage
+
 ```
 Usage: node label-process-output.js [OPTONS] COMMAND [...ARGS]
 Options:
