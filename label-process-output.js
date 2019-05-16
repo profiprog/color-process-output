@@ -29,8 +29,8 @@ function runProc(cmd, options) {
 
 
 const substitutions = {
-	t: () => format(now()),
-	T: () => format(now(), 6),
+	t: () => formatTime(now()),
+	T: () => formatTime(now(), 6),
 };
 
 const substituteDynamic = (label, opts) => label.replace(/%([%tT])/g, (m0, m1) => {
@@ -85,18 +85,18 @@ const color = {
 	bgWhite: v => `\x1b[107m${v}\x1b[0m`,
 };
 
+let formatCmd = cmd => cmd.map(_ =>
+	_.replace(/\\./g, '').replace(/((')[^']+'|(")[^"]+")/g, '$2$2$3$3').indexOf(' ') >= 0 ? `"${_}"` : _).join(' ');
+
 Object.assign(module.exports = runProc, { runProc, mark, tee, wrap, color });
 
-let format = (_, f = 0, t = 13) => [ _.getFullYear(),
+let formatTime = (_, f = 0, t = 13) => [ _.getFullYear(),
 		'-' , ("0" + (_.getMonth() + 1)).substr(-2),
 		'-' , ("0" + _.getDate()).substr(-2),
 		' ' , ("0" + _.getHours()).substr(-2),
 		':' , ("0" + _.getMinutes()).substr(-2),
 		':' , ("0" + _.getSeconds()).substr(-2),
 		'.' , ("00" + _.getMilliseconds()).substr(-3) ].slice(f, t).join('');
-
-let formatCmd = cmd => cmd.map(_ =>
-	_.replace(/\\./g, '').replace(/((')[^']+'|(")[^"]+")/g, '$2$2$3$3').indexOf(' ') >= 0 ? `"${_}"` : _).join(' ');
 
 
 if (require.main === module) {
@@ -149,7 +149,7 @@ if (require.main === module) {
 	let stderr = process.stderr.write.bind(process.stderr);
 
 	let formattedCommand = color.ligthYeallow(formatCmd(cmd));
-	if (label.indexOf('%T') >= 0) formattedCommand += color.darkGray(` (started on ${format(now(), 0, 5)})`);
+	if (label.indexOf('%T') >= 0) formattedCommand += color.darkGray(` (started on ${formatTime(now(), 0, 5)})`);
 	if (label) mark(protectStdout ? stderr : stdout, color.white(label + ': '))(formattedCommand);
 	runProc(cmd, {
 		stdout: hideStdout ?
