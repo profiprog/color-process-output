@@ -117,13 +117,14 @@ if (require.main === module) {
 	and
 	\x1b[31mbackup>\x1b[0m for stderr
 	Default is base name of command.
-	Labels can also contains special placeholders: 
+	Labels can also contains special placeholders:
 		\x1b[35m%t\x1b[0m will be expanded to timestamp (like 2019-05-15 17:44:25.748)
-		\x1b[35m%T\x1b[0m will be expanded to time (liek 17:44:25.748)
+		\x1b[35m%T\x1b[0m will be expanded to time (like 17:44:25.748)
 		\x1b[35m%%\x1b[0m will be replaced single '%'`,
 		"-e": `Print prefixed stdout to stderr and print stdout normally.
 	It's handy if stdout is captured like: VAL="$(${path.basename(process.argv[1])} md5 "$FILE")"`,
-		"-0": `Do not print prefixed stdout, neither to stdout or stderr`
+		"-0": `Do not print stdout, neither to stdout or stderr`,
+		"-s": `Do not prefixed stdout, just pass it thru.`,
 	};
 	let printHelp = () => {
 		const optsSep = '\n    ';
@@ -133,14 +134,22 @@ if (require.main === module) {
 	};
 
 	let cmd = process.argv.slice(2);
-	let label, protectStdout = false, hideStdout = false;
+	let label, protectStdout = false, hideStdout = false, ignoreStdout = false;
 	while (cmd.length && (cmd[0].charAt(0) === '-' || cmd[0].charAt(0) === '+')) {
-		if (cmd[0].charAt(0) === '+') { cmd.splice(0, 1, ...cmd[0].substr(2).split(cmd[0].charAt(1))); continue; }
-		if (helpOpts.indexOf(cmd[0]) >= 0) printHelp();
+		if (cmd[0].charAt(0) === '+') {
+			cmd.splice(0, 1, ...cmd[0].substr(2).split(cmd[0].charAt(1)));
+			continue;
+		}
+		if (cmd[0].charAt(1) !== '-' && cmd[0].length > 2) {
+			cmd.splice(0, 1, ...cmd[0].substr(1).split('').map(_=>'-'+_));
+			continue;
+		}
 		if (cmd[0] === '--') { cmd.shift(); break; }
+		if (helpOpts.indexOf(cmd[0]) >= 0) printHelp();
 		if (cmd[0] === '-l' || cmd[0] === '--label') { label = cmd.splice(0, 2)[1]; continue; }
 		if (cmd[0] === '-e') { protectStdout = !!cmd.shift(); continue; }
 		if (cmd[0] === '-0') { hideStdout = !!cmd.shift(); continue; }
+		if (cmd[0] === '-s') { protectStdout = ignoreStdout = !!cmd.shift(); continue; }
 		fail("Unknown option " + cmd[0], 404);
 	}
 	if (label === undefined) label = path.basename(cmd[0]);
@@ -153,7 +162,7 @@ if (require.main === module) {
 	if (label) mark(protectStdout ? stderr : stdout, color.white(label + ': '))(formattedCommand);
 	runProc(cmd, {
 		stdout: hideStdout ?
-			none : protectStdout ?
+			none : protectStdout ? ignoreStdout ? stdout :
 				tee(stdout, label ? mark(stderr, color.green(label + '> ')) : wrap(stderr, color.green)) :
 				label ? mark(stdout, color.green(label + '> ')) : wrap(stdout, color.green),
 		stderr: label ? mark(stderr, color.red(label + '> ')) : wrap(stderr, color.red),

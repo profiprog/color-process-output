@@ -10,7 +10,8 @@
     "test": "echo \"Error: no test specified\" && exit 1",
     "preversion": "[ -f ~/.npmrc.token.profiprog ] && cat ~/.npmrc.token.profiprog > ~/.npmrc; [ \"$(npm whoami)\" == \"profiprog\" ]",
     "version": "npm publish",
-    "postversion": "git push --follow-tags"
+    "postversion": "git push --follow-tags",
+    "start": "node label-process-output.js"
   },
   "repository": {
     "type": "git",
