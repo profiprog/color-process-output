@@ -13,10 +13,12 @@ function runProc(cmd, options) {
 	};
 	let childOpts = { stdio: [ 'inherit', 'pipe', 'pipe' ] };
 	for (let key of Object.keys(options)) (opts.hasOwnProperty(key) ? opts : childOpts)[key] = options[key];
+	if (typeof opts.stdout !== 'function') childOpts.stdio[1] = opts.stdout;
+	if (typeof opts.stderr !== 'function') childOpts.stdio[2] = opts.stderr;
 	return new Promise((resolve, reject) => {
 		let proc = spawn(cmd[0], cmd.slice(1), childOpts);
-		proc.stdout.setEncoding('utf8'); proc.stdout.on('data', opts.stdout);
-		proc.stderr.setEncoding('utf8'); proc.stderr.on('data', opts.stderr);
+		if (proc.stdout) { proc.stdout.setEncoding('utf8'); proc.stdout.on('data', opts.stdout); }
+		if (proc.stderr) { proc.stderr.setEncoding('utf8'); proc.stderr.on('data', opts.stderr); }
 		proc.on('close', code => {
 			if (code) reject(code);
 			else resolve(code);
@@ -134,7 +136,7 @@ if (require.main === module) {
 	};
 
 	let cmd = process.argv.slice(2);
-	let label, protectStdout = false, hideStdout = false, ignoreStdout = false;
+	let label, protectStdout = false, hideStdout = false, inheritStdout = false;
 	while (cmd.length && (cmd[0].charAt(0) === '-' || cmd[0].charAt(0) === '+')) {
 		if (cmd[0].charAt(0) === '+') {
 			cmd.splice(0, 1, ...cmd[0].substr(2).split(cmd[0].charAt(1)));
@@ -149,7 +151,7 @@ if (require.main === module) {
 		if (cmd[0] === '-l' || cmd[0] === '--label') { label = cmd.splice(0, 2)[1]; continue; }
 		if (cmd[0] === '-e') { protectStdout = !!cmd.shift(); continue; }
 		if (cmd[0] === '-0') { hideStdout = !!cmd.shift(); continue; }
-		if (cmd[0] === '-s') { protectStdout = ignoreStdout = !!cmd.shift(); continue; }
+		if (cmd[0] === '-s') { protectStdout = inheritStdout = !!cmd.shift(); continue; }
 		fail("Unknown option " + cmd[0], 404);
 	}
 	if (label === undefined) label = path.basename(cmd[0]);
@@ -162,7 +164,7 @@ if (require.main === module) {
 	if (label) mark(protectStdout ? stderr : stdout, color.white(label + ': '))(formattedCommand);
 	runProc(cmd, {
 		stdout: hideStdout ?
-			none : protectStdout ? ignoreStdout ? stdout :
+			none : protectStdout ? inheritStdout ? 'inherit' :
 				tee(stdout, label ? mark(stderr, color.green(label + '> ')) : wrap(stderr, color.green)) :
 				label ? mark(stdout, color.green(label + '> ')) : wrap(stdout, color.green),
 		stderr: label ? mark(stderr, color.red(label + '> ')) : wrap(stderr, color.red),
